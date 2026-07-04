@@ -1985,7 +1985,11 @@
           <div class="modal-handle"></div>
           <div class="modal-header">
             <div class="modal-title">${category.name}</div>
-            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+            <div style="display: flex; gap: 8px;">
+              <div class="category-btn" onclick="renameCategoryModal('${categoryId}')">✎</div>
+              <div class="category-btn" onclick="deleteCategoryConfirm('${categoryId}')" style="color: #ff6b6b;">✕</div>
+              <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+            </div>
           </div>
           
           <div class="category-list">
@@ -2011,6 +2015,66 @@
       };
       document.body.appendChild(modal);
       State.modalStack.push(modal);
+    }
+    
+    function renameCategoryModal(categoryId) {
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">重命名类别</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <input type="text" class="input-field" id="rename-category" value="${category.name}">
+          </div>
+          
+          <button class="btn" onclick="renameCategory('${categoryId}')">保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function renameCategory(categoryId) {
+      const name = document.getElementById('rename-category').value.trim();
+      if (!name) {
+        alert('请输入类别名称');
+        return;
+      }
+      
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      category.name = name;
+      Store.save();
+      closeCurrentModal();
+      closeCurrentModal();
+      render();
+    }
+    
+    function deleteCategoryConfirm(categoryId) {
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      State.confirmDialog = {
+        title: '确认删除',
+        message: `确定删除类别"${category.name}"吗？该类别下的所有事项也会被删除。`,
+        action: `deleteCategory('${categoryId}')`
+      };
+      closeCurrentModal();
+      render();
+    }
+    
+    function deleteCategory(categoryId) {
+      Store.data.settings.categories = Store.data.settings.categories.filter(c => c.id !== categoryId);
+      Store.save();
+      closeConfirm();
+      render();
     }
     
     function addCategoryItem(categoryId) {
@@ -2164,29 +2228,58 @@
     function attachEventListeners() {
       // Long press for context menu
       let pressTimer;
+      let longPressed = false;
       
       // Achievement items
       document.querySelectorAll('[data-achievement-id]').forEach(el => {
         el.addEventListener('touchstart', (e) => {
+          longPressed = false;
           pressTimer = setTimeout(() => {
+            longPressed = true;
             const id = el.dataset.achievementId;
             showAchievementMenu(e, id);
           }, 500);
         });
-        el.addEventListener('touchend', () => clearTimeout(pressTimer));
+        el.addEventListener('touchend', (e) => {
+          clearTimeout(pressTimer);
+          if (longPressed) {
+            e.preventDefault();
+            longPressed = false;
+          }
+        });
         el.addEventListener('touchmove', () => clearTimeout(pressTimer));
+        el.addEventListener('click', (e) => {
+          if (longPressed) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
       });
       
       // Expense day items
       document.querySelectorAll('[data-expense-day]').forEach(el => {
         el.addEventListener('touchstart', (e) => {
+          longPressed = false;
           pressTimer = setTimeout(() => {
+            longPressed = true;
             const [year, month, day] = el.dataset.expenseDay.split('-').map(Number);
             showExpenseMenu(e, year, month, day);
           }, 500);
         });
-        el.addEventListener('touchend', () => clearTimeout(pressTimer));
+        el.addEventListener('touchend', (e) => {
+          clearTimeout(pressTimer);
+          if (longPressed) {
+            e.preventDefault();
+            longPressed = false;
+          }
+        });
         el.addEventListener('touchmove', () => clearTimeout(pressTimer));
+        el.addEventListener('click', (e) => {
+          if (longPressed) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
       });
       
       // Click outside to hide context menu
