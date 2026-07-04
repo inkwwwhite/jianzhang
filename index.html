@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="简账">
+  <link rel="apple-touch-icon" href="icon.png">
+  <title>简账</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    :root {
+      --bg: #f5f3ef;
+      --bg-card: #fff;
+      --bg-hover: #f0ede8;
+      --border: #e0dcd5;
+      --text: #1a1a1a;
+      --text-secondary: #666;
+      --text-dim: #999;
+      --accent: #1a1a1a;
+      --negative: #1a1a1a;
+      --safe-top: env(safe-area-inset-top, 20px);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-top: var(--safe-top);
+      padding-bottom: calc(60px + var(--safe-bottom));
+    }
+    
+    .page {
+      display: none;
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .page.active {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .page-header {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+    
+    .reminder {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    /* Tab Bar */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding-bottom: var(--safe-bottom);
+      z-index: 100;
+    }
+    
+    .tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 0;
+      color: var(--text-dim);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .tab.active {
+      color: var(--accent);
+    }
+    
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      right: 20px;
+      bottom: calc(80px + var(--safe-bottom));
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--text);
+      color: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 300;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 90;
+    }
+    
+    /* Collapsible Sections */
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .section-header:active {
+      background: var(--bg-hover);
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .section-arrow {
+      color: var(--text-dim);
+      transition: transform 0.2s;
+    }
+    
+    .section.expanded .section-arrow {
+      transform: rotate(90deg);
+    }
+    
+    .section-content {
+      display: none;
+      border-top: 1px solid var(--border);
+    }
+    
+    .section.expanded .section-content {
+      display: block;
+    }
+    
+    /* Record Items */
+    .record-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    
+    .record-item:last-child {
+      border-bottom: none;
+    }
+    
+    .record-item:active {
+      background: var(--bg-hover);
+    }
+    
+    .record-date {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    
+    .record-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text);
+    }
+    
+    .record-detail {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .record-label {
+      color: var(--text-secondary);
+    }
+    
+    /* Achievement Items */
+    .achievement-item {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    
+    .achievement-item:last-child {
+      border-bottom: none;
+    }
+    
+    .achievement-category {
+      color: var(--text-dim);
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+    
+    .achievement-text {
+      color: var(--text);
+    }
+    
+    .achievement-note {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    
+    /* Month Summary */
+    .month-summary {
+      padding: 10px 12px;
+      background: var(--bg-hover);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .summary-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    
+    .summary-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .summary-label {
+      color: var(--text-dim);
+      width: 28px;
+      flex-shrink: 0;
+    }
+    
+    .summary-value {
+      flex: 1;
+      display: flex;
+    }
+    
+    .summary-col {
+      display: flex;
+      align-items: center;
+      margin-left: 12px;
+    }
+    
+    .summary-col-label {
+      margin-right: 4px;
+    }
+    
+    .summary-col-num {
+      min-width: 60px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    /* Calendar */
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .calendar-month {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .calendar-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    
+    .calendar-weekday {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 8px 0;
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      cursor: pointer;
+    }
+    
+    .calendar-day.empty {
+      background: transparent;
+      cursor: default;
+    }
+    
+    .calendar-day.today {
+      border: 1px solid var(--accent);
+    }
+    
+    .calendar-day.has-record {
+      background: var(--bg-hover);
+    }
+    
+    .calendar-day .day-number {
+      font-weight: 500;
+    }
+    
+    .calendar-day .day-expense {
+      font-size: 9px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+    
+    .calendar-day .day-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+      margin-top: 2px;
+    }
+    
+    .calendar-stats {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .stat-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Settings Page */
+    .setting-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    
+    .setting-group-title {
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 12px 16px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+    
+    .setting-item:active {
+      background: var(--bg-hover);
+    }
+    
+    .setting-label {
+      font-size: 15px;
+    }
+    
+    .setting-value {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    .modal {
+      background: var(--bg-card);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+      padding-bottom: calc(20px + var(--safe-bottom));
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-hover);
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    
+    /* Input Groups */
+    .input-group {
+      margin-bottom: 16px;
+    }
+    
+    .input-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+    
+    .input-field:focus {
+      border-color: var(--accent);
+    }
+    
+    .input-row {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .input-row .input-group {
+      flex: 1;
+    }
+    
+    /* Calculator */
+    .calculator {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .calc-display {
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: right;
+      font-size: 24px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      min-height: 50px;
+      word-break: break-all;
+    }
+    
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    
+    .calc-btn {
+      aspect-ratio: 1.3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 20px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    
+    .calc-btn:active {
+      background: var(--bg-hover);
+    }
+    
+    .calc-btn.operator {
+      background: var(--bg-hover);
+    }
+    
+    .calc-btn.equals {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--text);
+      color: var(--bg-card);
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .btn:active {
+      opacity: 0.9;
+    }
+    
+    .btn-secondary {
+      background: var(--bg-hover);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    .btn-danger {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b;
+    }
+    
+    /* Select Dropdown */
+    .select-field {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+    }
+    
+    /* Context Menu */
+    .context-menu {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 300;
+      min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    
+    .context-item {
+      padding: 14px 20px;
+      font-size: 15px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .context-item:last-child {
+      border-bottom: none;
+    }
+    
+    .context-item:active {
+      background: var(--bg-hover);
+    }
+    
+    .context-item.danger {
+      color: #ff6b6b;
+    }
+    
+    /* Confirm Dialog */
+    .confirm-dialog {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      z-index: 400;
+      width: calc(100% - 48px);
+      max-width: 300px;
+      text-align: center;
+    }
+    
+    .confirm-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .confirm-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    
+    .confirm-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .confirm-buttons .btn {
+      flex: 1;
+      padding: 12px;
+    }
+    
+    /* Category Management */
+    .category-list {
+      margin-top: 12px;
+    }
+    
+    .category-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .category-name {
+      font-size: 15px;
+    }
+    
+    .category-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .category-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-hover);
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    
+    .add-category-btn {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    
+    .add-category-btn:active {
+      background: var(--bg-hover);
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    
+    .empty-text {
+      font-size: 14px;
+    }
+    
+    /* Month Statistics */
+    .month-stats {
+      margin-top: 16px;
+    }
+    
+    .stats-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .stats-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    
+    .stats-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .stats-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  
+  <script>
+    // Data Store
+    const Store = {
+      data: {
+        settings: {
+          monthlyBudget: 2000,
+          fixedBudget: 500,
+          categories: [
+            { id: '1', name: '饮食', items: [
+              { id: '1-1', name: '吃早饭', subs: [] },
+              { id: '1-2', name: '吃午饭', subs: ['吃饱就停'] },
+              { id: '1-3', name: '吃晚饭', subs: ['吃饱就停'] },
+              { id: '1-4', name: '没吃宵夜', subs: [] }
+            ]},
+            { id: '2', name: '作息', items: [
+              { id: '2-1', name: '12点前睡', subs: [] },
+              { id: '2-2', name: '刷牙', subs: [] },
+              { id: '2-3', name: '洗澡', subs: [] }
+            ]},
+            { id: '3', name: '工作/学习', items: [
+              { id: '3-1', name: '干活了', subs: [] }
+            ]},
+            { id: '4', name: '其他', items: [] }
+          ]
+        },
+        monthBudgets: {},
+        expenses: [],
+        achievements: []
+      },
+      
+      load() {
+        const saved = localStorage.getItem('jiandan_data');
+        if (saved) {
+          try {
+            this.data = JSON.parse(saved);
+            if (!this.data.settings.categories) {
+              this.data.settings.categories = [
+                { id: '1', name: '饮食', items: [] },
+                { id: '2', name: '作息', items: [] },
+                { id: '3', name: '工作/学习', items: [] },
+                { id: '4', name: '其他', items: [] }
+              ];
+            }
+          } catch (e) {
+            console.error('Failed to load data');
+          }
+        }
+      },
+      
+      save() {
+        localStorage.setItem('jiandan_data', JSON.stringify(this.data));
+      },
+      
+      getMonthBudget(year, month) {
+        const key = `${year}-${month}`;
+        if (!this.data.monthBudgets[key]) {
+          // 首次获取时，用当前默认值初始化并保存
+          this.data.monthBudgets[key] = {
+            total: this.data.settings.monthlyBudget,
+            fixed: this.data.settings.fixedBudget
+          };
+          this.save();
+        }
+        return this.data.monthBudgets[key];
+      },
+      
+      setMonthBudget(year, month, budget) {
+        const key = `${year}-${month}`;
+        this.data.monthBudgets[key] = budget;
+        this.save();
+      },
+      
+      getDailyBudget(year, month) {
+        const budget = this.getMonthBudget(year, month);
+        const dailyBudget = budget.total - budget.fixed;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        return dailyBudget / daysInMonth;
+      },
+      
+      addExpense(expense) {
+        this.data.expenses.push({ ...expense, id: Date.now().toString() });
+        this.save();
+      },
+      
+      updateExpense(id, expense) {
+        const idx = this.data.expenses.findIndex(e => e.id === id);
+        if (idx >= 0) {
+          this.data.expenses[idx] = { ...this.data.expenses[idx], ...expense };
+          this.save();
+        }
+      },
+      
+      deleteExpense(id) {
+        this.data.expenses = this.data.expenses.filter(e => e.id !== id);
+        this.save();
+      },
+      
+      getExpensesByDate(year, month, day) {
+        return this.data.expenses.filter(e => 
+          e.year === year && e.month === month && e.day === day
+        );
+      },
+      
+      addAchievement(achievement) {
+        this.data.achievements.push({ ...achievement, id: Date.now().toString() });
+        this.save();
+      },
+      
+      updateAchievement(id, achievement) {
+        const idx = this.data.achievements.findIndex(a => a.id === id);
+        if (idx >= 0) {
+          this.data.achievements[idx] = { ...this.data.achievements[idx], ...achievement };
+          this.save();
+        }
+      },
+      
+      deleteAchievement(id) {
+        this.data.achievements = this.data.achievements.filter(a => a.id !== id);
+        this.save();
+      },
+      
+      getAchievementsByDate(year, month, day) {
+        return this.data.achievements.filter(a => 
+          a.year === year && a.month === month && a.day === day
+        );
+      }
+    };
+    
+    // Utils
+    const Utils = {
+      formatDate(year, month, day) {
+        return `${month}月${day}日`;
+      },
+      
+      formatMoney(amount) {
+        if (amount < 0) {
+          return `-${Math.abs(amount).toFixed(2)}`;
+        }
+        return amount.toFixed(2);
+      },
+      
+      getToday() {
+        const now = new Date();
+        return {
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+          day: now.getDate()
+        };
+      },
+      
+      getDaysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+      }
+    };
+    
+    // App State
+    const State = {
+      currentTab: 0,
+      calendarYear: new Date().getFullYear(),
+      calendarMonth: new Date().getMonth() + 1,
+      expandedSections: new Set(),
+      initializedSections: new Set(),
+      modalStack: [],
+      contextMenu: null,
+      confirmDialog: null
+    };
+    
+    // Initialize
+    Store.load();
+    
+    // Render Functions
+    function render() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        ${renderPages()}
+        ${renderTabBar()}
+        ${renderFAB()}
+        ${renderModals()}
+      `;
+      attachEventListeners();
+    }
+    
+    function renderPages() {
+      return `
+        <div class="page ${State.currentTab === 0 ? 'active' : ''}" id="page-achievements">
+          ${renderAchievementsPage()}
+        </div>
+        <div class="page ${State.currentTab === 1 ? 'active' : ''}" id="page-expenses">
+          ${renderExpensesPage()}
+        </div>
+        <div class="page ${State.currentTab === 2 ? 'active' : ''}" id="page-calendar">
+          ${renderCalendarPage()}
+        </div>
+        <div class="page ${State.currentTab === 3 ? 'active' : ''}" id="page-settings">
+          ${renderSettingsPage()}
+        </div>
+      `;
+    }
+    
+    function renderAchievementsPage() {
+      const today = Utils.getToday();
+      const todayAchievements = Store.getAchievementsByDate(today.year, today.month, today.day);
+      const hasToday = todayAchievements.length > 0;
+      
+      // Group achievements by date
+      const grouped = {};
+      Store.data.achievements.forEach(a => {
+        const key = `${a.year}-${a.month}-${a.day}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(a);
+      });
+      
+      // Sort dates descending (newest first for rendering, but we'll reverse for display)
+      const dates = Object.keys(grouped).sort((a, b) => {
+        const [ay, am, ad] = a.split('-').map(Number);
+        const [by, bm, bd] = b.split('-').map(Number);
+        return new Date(by, bm - 1, bd) - new Date(ay, am - 1, ad);
+      });
+      
+      // Reverse to show oldest first (positive order)
+      dates.reverse();
+      
+      let content = '';
+      
+      if (!hasToday) {
+        content += `<div class="reminder">今天还没记录成就</div>`;
+      }
+      
+      if (dates.length === 0) {
+        content += `
+          <div class="empty-state">
+            <div class="empty-icon">✨</div>
+            <div class="empty-text">点击右下角 + 记录今天做到的事</div>
+          </div>
+        `;
+      } else {
+        dates.forEach(dateKey => {
+          const [year, month, day] = dateKey.split('-').map(Number);
+          const isToday = year === today.year && month === today.month && day === today.day;
+          const achKey = `ach-${dateKey}`;
+          const isExpanded = State.expandedSections.has(achKey);
+          
+          // 当天默认展开
+          if (isToday && !State.initializedSections.has(achKey)) {
+            State.expandedSections.add(achKey);
+            State.initializedSections.add(achKey);
+          }
+          const achievements = grouped[dateKey];
+          
+          // Group by category
+          const byCategory = {};
+          achievements.forEach(a => {
+            if (!byCategory[a.category]) byCategory[a.category] = [];
+            byCategory[a.category].push(a);
+          });
+          
+          content += `
+            <div class="section ${isExpanded ? 'expanded' : ''}" data-section="ach-${dateKey}">
+              <div class="section-header" onclick="event.stopPropagation(); toggleSection('ach-${dateKey}')">
+                <span class="section-title">${year}年${month}月${day}日</span>
+                <span class="section-arrow">›</span>
+              </div>
+              <div class="section-content">
+                ${Object.entries(byCategory).map(([cat, items]) => `
+                  <div class="achievement-category" style="padding: 8px 16px 4px; border-bottom: none;">${cat}</div>
+                  ${items.map(a => `
+                    <div class="achievement-item" 
+                         onclick="editAchievement('${a.id}')"
+                         oncontextmenu="showAchievementMenu(event, '${a.id}')"
+                         data-achievement-id="${a.id}">
+                      <div class="achievement-text">${a.item}${a.sub ? ' · ' + a.sub : ''}</div>
+                      ${a.note ? `<div class="achievement-note">${a.note}</div>` : ''}
+                    </div>
+                  `).join('')}
+                `).join('')}
+              </div>
+            </div>
+          `;
+        });
+      }
+      
+      return `
+        <div class="page-header">每日成就</div>
+        ${content}
+      `;
+    }
+    
+    function renderExpensesPage() {
+      const today = Utils.getToday();
+      const todayExpenses = Store.getExpensesByDate(today.year, today.month, today.day);
+      const hasToday = todayExpenses.length > 0;
+      
+      // Group expenses by year -> month -> day
+      const grouped = {};
+      Store.data.expenses.forEach(e => {
+        if (!grouped[e.year]) grouped[e.year] = {};
+        if (!grouped[e.year][e.month]) grouped[e.year][e.month] = {};
+        if (!grouped[e.year][e.month][e.day]) grouped[e.year][e.month][e.day] = [];
+        grouped[e.year][e.month][e.day].push(e);
+      });
+      
+      const years = Object.keys(grouped).sort((a, b) => a - b);
+      
+      let content = '';
+      
+      if (!hasToday) {
+        content += `<div class="reminder">今天还没记账</div>`;
+      }
+      
+      if (years.length === 0) {
+        content += `
+          <div class="empty-state">
+            <div class="empty-icon">💰</div>
+            <div class="empty-text">点击右下角 + 开始记账</div>
+          </div>
+        `;
+      } else {
+        years.forEach(year => {
+          const yearKey = `exp-${year}`;
+          const isYearExpanded = State.expandedSections.has(yearKey);
+          
+          // 当前年默认展开
+          if (year == today.year && !State.initializedSections.has(yearKey)) {
+            State.expandedSections.add(yearKey);
+            State.initializedSections.add(yearKey);
+          }
+          
+          content += `
+            <div class="section ${isYearExpanded ? 'expanded' : ''}" data-section="${yearKey}">
+              <div class="section-header" onclick="event.stopPropagation(); toggleSection('${yearKey}')">
+                <span class="section-title">${year}年</span>
+                <span class="section-arrow">›</span>
+              </div>
+              <div class="section-content">
+                ${renderYearExpenses(year, grouped[year], today)}
+              </div>
+            </div>
+          `;
+        });
+      }
+      
+      return `
+        <div class="page-header">记账</div>
+        ${content}
+      `;
+    }
+    
+    function renderYearExpenses(year, monthsData, today) {
+      const months = Object.keys(monthsData).sort((a, b) => a - b);
+      
+      return months.map(month => {
+        const monthKey = `exp-${year}-${month}`;
+        const isMonthExpanded = State.expandedSections.has(monthKey);
+        
+        // 当前月默认展开
+        if (year == today.year && month == today.month && !State.initializedSections.has(monthKey)) {
+          State.expandedSections.add(monthKey);
+          State.initializedSections.add(monthKey);
+        }
+        const budget = Store.getMonthBudget(year, month);
+        const dailyBudget = Store.getDailyBudget(year, month);
+        const daysInMonth = Utils.getDaysInMonth(year, month);
+        
+        // Calculate totals
+        let totalDaily = 0;
+        let totalFixed = 0;
+        
+        Object.values(monthsData[month]).forEach(dayExpenses => {
+          dayExpenses.forEach(e => {
+            if (e.type === 'daily') totalDaily += e.amount;
+            else totalFixed += e.amount;
+          });
+        });
+        
+        const dailyBudgetTotal = budget.total - budget.fixed;
+        const dailyBalance = dailyBudgetTotal - totalDaily;
+        const fixedBalance = budget.fixed - totalFixed;
+        const totalBalance = dailyBalance + fixedBalance;
+        
+        return `
+          <div class="section ${isMonthExpanded ? 'expanded' : ''}" data-section="${monthKey}" style="margin: 0; border-radius: 0; border-left: none; border-right: none; border-top: none;">
+            <div class="section-header" onclick="event.stopPropagation(); toggleSection('${monthKey}')">
+              <span class="section-title">${month}月</span>
+              <span class="section-arrow">›</span>
+            </div>
+            <div class="section-content">
+              <div class="month-summary" onclick="editMonthBudget(${year}, ${month})" style="cursor: pointer;">
+                <div class="summary-row">
+                  <span class="summary-label">预算</span>
+                  <span class="summary-value">
+                    <span class="summary-col"><span class="summary-col-label">日常</span><span class="summary-col-num">${dailyBudgetTotal.toFixed(2)}</span></span>
+                    <span class="summary-col"><span class="summary-col-label">固定</span><span class="summary-col-num">${budget.fixed.toFixed(2)}</span></span>
+                    <span class="summary-col"><span class="summary-col-label">总</span><span class="summary-col-num">${budget.total.toFixed(2)}</span></span>
+                  </span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">支出</span>
+                  <span class="summary-value">
+                    <span class="summary-col"><span class="summary-col-label">日常</span><span class="summary-col-num">${totalDaily.toFixed(2)}</span></span>
+                    <span class="summary-col"><span class="summary-col-label">固定</span><span class="summary-col-num">${totalFixed.toFixed(2)}</span></span>
+                    <span class="summary-col"><span class="summary-col-label">总</span><span class="summary-col-num">${(totalDaily + totalFixed).toFixed(2)}</span></span>
+                  </span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">结余</span>
+                  <span class="summary-value">
+                    <span class="summary-col"><span class="summary-col-label">日常</span><span class="summary-col-num">${Utils.formatMoney(dailyBalance)}</span></span>
+                    <span class="summary-col"><span class="summary-col-label">固定</span><span class="summary-col-num">${Utils.formatMoney(fixedBalance)}</span></span>
+                    <span class="summary-col"><span class="summary-col-label">总</span><span class="summary-col-num">${Utils.formatMoney(totalBalance)}</span></span>
+                  </span>
+                </div>
+              </div>
+              ${renderMonthExpenses(year, month, monthsData[month], dailyBudget)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderMonthExpenses(year, month, daysData, dailyBudget) {
+      const days = Object.keys(daysData).sort((a, b) => a - b);
+      
+      return days.map(day => {
+        const dayExpenses = daysData[day];
+        let dailyExpense = 0;
+        let fixedExpense = 0;
+        
+        dayExpenses.forEach(e => {
+          if (e.type === 'daily') dailyExpense += e.amount;
+          else fixedExpense += e.amount;
+        });
+        
+        const dailyBalance = dailyBudget - dailyExpense;
+        const totalExpense = dailyExpense + fixedExpense;
+        
+        return `
+          <div class="record-item" 
+               data-expense-day="${year}-${month}-${day}"
+               onclick="editExpenseDay(${year}, ${month}, ${day})"
+               oncontextmenu="showExpenseMenu(event, ${year}, ${month}, ${day})">
+            <div class="record-date">${month}月${day}日</div>
+            <div class="record-details">
+              ${dailyExpense > 0 ? `<div class="record-detail"><span class="record-label">日常:</span>${dailyExpense.toFixed(2)}</div>` : ''}
+              ${fixedExpense > 0 ? `<div class="record-detail"><span class="record-label">固定:</span>${fixedExpense.toFixed(2)}</div>` : ''}
+              <div class="record-detail"><span class="record-label">总支出:</span>${totalExpense.toFixed(2)}</div>
+              <div class="record-detail"><span class="record-label">当日结余:</span>${Utils.formatMoney(dailyBalance)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderCalendarPage() {
+      const year = State.calendarYear;
+      const month = State.calendarMonth;
+      const today = Utils.getToday();
+      const daysInMonth = Utils.getDaysInMonth(year, month);
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      
+      // Count records
+      let expenseDays = 0;
+      let achievementDays = 0;
+      const expenseByDay = {};
+      const achievementByDay = {};
+      
+      Store.data.expenses.forEach(e => {
+        if (e.year === year && e.month === month) {
+          if (!expenseByDay[e.day]) {
+            expenseByDay[e.day] = 0;
+            expenseDays++;
+          }
+          expenseByDay[e.day] += e.amount;
+        }
+      });
+      
+      Store.data.achievements.forEach(a => {
+        if (a.year === year && a.month === month) {
+          if (!achievementByDay[a.day]) {
+            achievementByDay[a.day] = true;
+            achievementDays++;
+          }
+        }
+      });
+      
+      let calendarDays = '';
+      
+      // Empty cells for days before first day of month
+      for (let i = 0; i < firstDay; i++) {
+        calendarDays += `<div class="calendar-day empty"></div>`;
+      }
+      
+      // Days of month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = year === today.year && month === today.month && day === today.day;
+        const hasExpense = expenseByDay[day];
+        const hasAchievement = achievementByDay[day];
+        const hasRecord = hasExpense || hasAchievement;
+        
+        calendarDays += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${hasRecord ? 'has-record' : ''}">
+            <span class="day-number">${day}</span>
+            ${hasExpense ? `<span class="day-expense">${expenseByDay[day].toFixed(0)}</span>` : ''}
+            ${hasAchievement && !hasExpense ? `<span class="day-dot"></span>` : ''}
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="page-header">日历</div>
+        <div class="calendar-nav">
+          <div class="calendar-btn" onclick="prevMonth()">‹</div>
+          <div class="calendar-month">${year}年${month}月</div>
+          <div class="calendar-btn" onclick="nextMonth()">›</div>
+        </div>
+        <div class="calendar-grid">
+          ${weekdays.map(w => `<div class="calendar-weekday">${w}</div>`).join('')}
+          ${calendarDays}
+        </div>
+        <div class="calendar-stats">
+          <div class="stat-row">
+            <span>本月记账</span>
+            <span>${expenseDays} 天</span>
+          </div>
+          <div class="stat-row">
+            <span>本月记录成就</span>
+            <span>${achievementDays} 天</span>
+          </div>
+        </div>
+        ${renderMonthStats(year, month)}
+      `;
+    }
+    
+    function renderMonthStats(year, month) {
+      // Achievement stats by category
+      const categoryStats = {};
+      Store.data.achievements.forEach(a => {
+        if (a.year === year && a.month === month) {
+          if (!categoryStats[a.category]) categoryStats[a.category] = 0;
+          categoryStats[a.category]++;
+        }
+      });
+      
+      if (Object.keys(categoryStats).length === 0) {
+        return '';
+      }
+      
+      return `
+        <div class="month-stats">
+          <div class="stats-section">
+            <div class="stats-title">本月成就统计</div>
+            ${Object.entries(categoryStats).map(([cat, count]) => `
+              <div class="stats-item">
+                <span>${cat}</span>
+                <span>${count} 次</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderSettingsPage() {
+      const settings = Store.data.settings;
+      const dailyBudget = settings.monthlyBudget - settings.fixedBudget;
+      
+      return `
+        <div class="page-header">管理</div>
+        
+        <div class="setting-group">
+          <div class="setting-group-title">预算设置</div>
+          <div class="setting-item" onclick="editSetting('monthlyBudget')">
+            <span class="setting-label">每月可支配金额</span>
+            <span class="setting-value">${settings.monthlyBudget.toFixed(2)}</span>
+          </div>
+          <div class="setting-item" onclick="editSetting('fixedBudget')">
+            <span class="setting-label">固定支出预算</span>
+            <span class="setting-value">${settings.fixedBudget.toFixed(2)}</span>
+          </div>
+          <div class="setting-item" onclick="editSetting('dailyBudget')">
+            <span class="setting-label">日常支出预算</span>
+            <span class="setting-value">${dailyBudget.toFixed(2)}</span>
+          </div>
+        </div>
+        
+        <div class="setting-group">
+          <div class="setting-group-title">成就类别管理</div>
+          ${settings.categories.map(cat => `
+            <div class="setting-item" onclick="editCategory('${cat.id}')">
+              <span class="setting-label">${cat.name}</span>
+              <span class="setting-value">${cat.items.length} 项</span>
+            </div>
+          `).join('')}
+          <div class="setting-item" onclick="addCategory()" style="color: var(--text-secondary);">
+            <span>+ 添加类别</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderTabBar() {
+      const tabs = ['成就', '记账', '日历', '管理'];
+      
+      return `
+        <div class="tab-bar">
+          ${tabs.map((tab, i) => `
+            <div class="tab ${State.currentTab === i ? 'active' : ''}" onclick="switchTab(${i})">${tab}</div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
+    function renderFAB() {
+      if (State.currentTab === 0 || State.currentTab === 1) {
+        return `<div class="fab" onclick="openAddModal()">+</div>`;
+      }
+      return '';
+    }
+    
+    function renderModals() {
+      let html = `<div class="modal-overlay ${State.modalStack.length > 0 ? 'active' : ''}" onclick="closeModal(event)"></div>`;
+      
+      if (State.contextMenu) {
+        html += `
+          <div class="context-menu">
+            ${State.contextMenu.items.map(item => `
+              <div class="context-item ${item.danger ? 'danger' : ''}" onclick="${item.action}">${item.label}</div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      if (State.confirmDialog) {
+        html += `
+          <div class="modal-overlay active" style="align-items: center;"></div>
+          <div class="confirm-dialog">
+            <div class="confirm-title">${State.confirmDialog.title}</div>
+            <div class="confirm-message">${State.confirmDialog.message}</div>
+            <div class="confirm-buttons">
+              <button class="btn btn-secondary" onclick="closeConfirm()">取消</button>
+              <button class="btn btn-danger" onclick="${State.confirmDialog.action}">删除</button>
+            </div>
+          </div>
+        `;
+      }
+      
+      return html;
+    }
+    
+    // Event Handlers
+    function switchTab(index) {
+      State.currentTab = index;
+      render();
+    }
+    
+    function toggleSection(key) {
+      if (State.expandedSections.has(key)) {
+        State.expandedSections.delete(key);
+      } else {
+        State.expandedSections.add(key);
+      }
+      render();
+    }
+    
+    function prevMonth() {
+      State.calendarMonth--;
+      if (State.calendarMonth < 1) {
+        State.calendarMonth = 12;
+        State.calendarYear--;
+      }
+      render();
+    }
+    
+    function nextMonth() {
+      State.calendarMonth++;
+      if (State.calendarMonth > 12) {
+        State.calendarMonth = 1;
+        State.calendarYear++;
+      }
+      render();
+    }
+    
+    function openAddModal() {
+      if (State.currentTab === 0) {
+        showAchievementModal();
+      } else {
+        showExpenseModal();
+      }
+    }
+    
+    function showExpenseModal(year, month, day, existingDaily = 0, existingFixed = 0) {
+      const today = Utils.getToday();
+      const modalYear = year || today.year;
+      const modalMonth = month || today.month;
+      const modalDay = day || today.day;
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">记账</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">日期</div>
+            <input type="date" class="input-field" id="expense-date" 
+                   value="${modalYear}-${String(modalMonth).padStart(2,'0')}-${String(modalDay).padStart(2,'0')}">
+          </div>
+          
+          <div class="input-row">
+            <div class="input-group">
+              <div class="input-label">日常支出</div>
+              <input type="text" class="input-field" id="expense-daily" 
+                     value="${existingDaily || ''}" placeholder="0.00" inputmode="decimal">
+            </div>
+            <div class="input-group">
+              <div class="input-label">固定支出</div>
+              <input type="text" class="input-field" id="expense-fixed" 
+                     value="${existingFixed || ''}" placeholder="0.00" inputmode="decimal">
+            </div>
+          </div>
+          
+          <div class="calculator">
+            <div class="calc-display" id="calc-display">0</div>
+            <div class="calc-grid">
+              <div class="calc-btn" onclick="calcInput('7')">7</div>
+              <div class="calc-btn" onclick="calcInput('8')">8</div>
+              <div class="calc-btn" onclick="calcInput('9')">9</div>
+              <div class="calc-btn operator" onclick="calcInput('÷')">÷</div>
+              <div class="calc-btn" onclick="calcInput('4')">4</div>
+              <div class="calc-btn" onclick="calcInput('5')">5</div>
+              <div class="calc-btn" onclick="calcInput('6')">6</div>
+              <div class="calc-btn operator" onclick="calcInput('×')">×</div>
+              <div class="calc-btn" onclick="calcInput('1')">1</div>
+              <div class="calc-btn" onclick="calcInput('2')">2</div>
+              <div class="calc-btn" onclick="calcInput('3')">3</div>
+              <div class="calc-btn operator" onclick="calcInput('-')">-</div>
+              <div class="calc-btn" onclick="calcInput('0')">0</div>
+              <div class="calc-btn" onclick="calcInput('.')">.</div>
+              <div class="calc-btn" onclick="calcClear()">C</div>
+              <div class="calc-btn operator" onclick="calcInput('+')">+</div>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <div class="calc-btn" style="flex: 1; aspect-ratio: auto; padding: 12px;" onclick="calcToDaily()">填入日常</div>
+              <div class="calc-btn" style="flex: 1; aspect-ratio: auto; padding: 12px;" onclick="calcToFixed()">填入固定</div>
+              <div class="calc-btn equals" style="flex: 1; aspect-ratio: auto; padding: 12px;" onclick="calcEquals()">=</div>
+            </div>
+          </div>
+          
+          <button class="btn" onclick="saveExpense()">确认并保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    let calcExpression = '0';
+    
+    function calcInput(char) {
+      if (calcExpression === '0' && char !== '.') {
+        calcExpression = char;
+      } else {
+        calcExpression += char;
+      }
+      document.getElementById('calc-display').textContent = calcExpression;
+    }
+    
+    function calcClear() {
+      calcExpression = '0';
+      document.getElementById('calc-display').textContent = '0';
+    }
+    
+    function calcEquals() {
+      try {
+        let expr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+        let result = eval(expr);
+        calcExpression = String(Math.round(result * 100) / 100);
+        document.getElementById('calc-display').textContent = calcExpression;
+      } catch (e) {
+        document.getElementById('calc-display').textContent = 'Error';
+      }
+    }
+    
+    function calcToDaily() {
+      calcEquals();
+      document.getElementById('expense-daily').value = calcExpression;
+    }
+    
+    function calcToFixed() {
+      calcEquals();
+      document.getElementById('expense-fixed').value = calcExpression;
+    }
+    
+    function saveExpense() {
+      const dateStr = document.getElementById('expense-date').value;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const daily = parseFloat(document.getElementById('expense-daily').value) || 0;
+      const fixed = parseFloat(document.getElementById('expense-fixed').value) || 0;
+      
+      // Delete existing expenses for this day
+      Store.data.expenses = Store.data.expenses.filter(e => 
+        !(e.year === year && e.month === month && e.day === day)
+      );
+      
+      // Add new expenses
+      if (daily > 0) {
+        Store.addExpense({ year, month, day, type: 'daily', amount: daily });
+      }
+      if (fixed > 0) {
+        Store.addExpense({ year, month, day, type: 'fixed', amount: fixed });
+      }
+      
+      Store.save();
+      closeCurrentModal();
+      render();
+    }
+    
+    function editExpenseDay(year, month, day) {
+      const expenses = Store.getExpensesByDate(year, month, day);
+      let daily = 0, fixed = 0;
+      expenses.forEach(e => {
+        if (e.type === 'daily') daily += e.amount;
+        else fixed += e.amount;
+      });
+      showExpenseModal(year, month, day, daily, fixed);
+    }
+    
+    function showExpenseMenu(event, year, month, day) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const rect = event.target.getBoundingClientRect();
+      State.contextMenu = {
+        x: Math.min(event.clientX, window.innerWidth - 160),
+        y: event.clientY,
+        items: [
+          { label: '编辑', action: `editExpenseDay(${year}, ${month}, ${day}); hideContextMenu();` },
+          { label: '删除', danger: true, action: `confirmDeleteExpense(${year}, ${month}, ${day})` }
+        ]
+      };
+      render();
+    }
+    
+    function confirmDeleteExpense(year, month, day) {
+      hideContextMenu();
+      State.confirmDialog = {
+        title: '确认删除',
+        message: `确定删除 ${month}月${day}日 的记账记录吗？`,
+        action: `deleteExpenseDay(${year}, ${month}, ${day})`
+      };
+      render();
+    }
+    
+    function deleteExpenseDay(year, month, day) {
+      Store.data.expenses = Store.data.expenses.filter(e => 
+        !(e.year === year && e.month === month && e.day === day)
+      );
+      Store.save();
+      closeConfirm();
+      render();
+    }
+    
+    function showAchievementModal(existingAchievement = null) {
+      const today = Utils.getToday();
+      const categories = Store.data.settings.categories;
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">${existingAchievement ? '编辑成就' : '记录成就'}</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">日期</div>
+            <input type="date" class="input-field" id="ach-date" 
+                   value="${existingAchievement ? `${existingAchievement.year}-${String(existingAchievement.month).padStart(2,'0')}-${String(existingAchievement.day).padStart(2,'0')}` : `${today.year}-${String(today.month).padStart(2,'0')}-${String(today.day).padStart(2,'0')}`}">
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">类别</div>
+            <select class="select-field" id="ach-category" onchange="updateItemOptions()">
+              <option value="">选择类别</option>
+              ${categories.map(c => `<option value="${c.id}" ${existingAchievement && existingAchievement.categoryId === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+            </select>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">具体事项</div>
+            <select class="select-field" id="ach-item" onchange="updateSubOptions()">
+              <option value="">选择事项</option>
+            </select>
+          </div>
+          
+          <div class="input-group" id="ach-sub-group" style="display: none;">
+            <div class="input-label">细分（可选）</div>
+            <select class="select-field" id="ach-sub">
+              <option value="">不选择</option>
+            </select>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">备注（可选）</div>
+            <input type="text" class="input-field" id="ach-note" placeholder="添加备注..." value="${existingAchievement ? existingAchievement.note || '' : ''}">
+          </div>
+          
+          <button class="btn" onclick="saveAchievement('${existingAchievement ? existingAchievement.id : ''}')">确认并保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+      
+      // If editing, populate the selects
+      if (existingAchievement) {
+        setTimeout(() => {
+          updateItemOptions();
+          document.getElementById('ach-item').value = existingAchievement.itemId || '';
+          updateSubOptions();
+          document.getElementById('ach-sub').value = existingAchievement.sub || '';
+        }, 0);
+      }
+    }
+    
+    function updateItemOptions() {
+      const categoryId = document.getElementById('ach-category').value;
+      const itemSelect = document.getElementById('ach-item');
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      
+      itemSelect.innerHTML = '<option value="">选择事项</option>';
+      if (category) {
+        category.items.forEach(item => {
+          itemSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+        });
+      }
+      
+      document.getElementById('ach-sub-group').style.display = 'none';
+    }
+    
+    function updateSubOptions() {
+      const categoryId = document.getElementById('ach-category').value;
+      const itemId = document.getElementById('ach-item').value;
+      const subSelect = document.getElementById('ach-sub');
+      const subGroup = document.getElementById('ach-sub-group');
+      
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      const item = category?.items.find(i => i.id === itemId);
+      
+      subSelect.innerHTML = '<option value="">不选择</option>';
+      
+      if (item && item.subs && item.subs.length > 0) {
+        subGroup.style.display = 'block';
+        item.subs.forEach(sub => {
+          subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+        });
+      } else {
+        subGroup.style.display = 'none';
+      }
+    }
+    
+    function saveAchievement(existingId) {
+      const dateStr = document.getElementById('ach-date').value;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const categoryId = document.getElementById('ach-category').value;
+      const itemId = document.getElementById('ach-item').value;
+      const sub = document.getElementById('ach-sub').value;
+      const note = document.getElementById('ach-note').value;
+      
+      if (!categoryId || !itemId) {
+        alert('请选择类别和事项');
+        return;
+      }
+      
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      const item = category?.items.find(i => i.id === itemId);
+      
+      const achievement = {
+        year, month, day,
+        categoryId,
+        category: category.name,
+        itemId,
+        item: item.name,
+        sub,
+        note
+      };
+      
+      if (existingId) {
+        Store.updateAchievement(existingId, achievement);
+      } else {
+        Store.addAchievement(achievement);
+      }
+      
+      closeCurrentModal();
+      render();
+    }
+    
+    function editAchievement(id) {
+      const achievement = Store.data.achievements.find(a => a.id === id);
+      if (achievement) {
+        showAchievementModal(achievement);
+      }
+    }
+    
+    function showAchievementMenu(event, id) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      State.contextMenu = {
+        x: Math.min(event.clientX, window.innerWidth - 160),
+        y: event.clientY,
+        items: [
+          { label: '编辑', action: `editAchievement('${id}'); hideContextMenu();` },
+          { label: '删除', danger: true, action: `confirmDeleteAchievement('${id}')` }
+        ]
+      };
+      render();
+    }
+    
+    function confirmDeleteAchievement(id) {
+      hideContextMenu();
+      State.confirmDialog = {
+        title: '确认删除',
+        message: '确定删除这条成就记录吗？',
+        action: `deleteAchievement('${id}')`
+      };
+      render();
+    }
+    
+    function deleteAchievement(id) {
+      Store.deleteAchievement(id);
+      closeConfirm();
+      render();
+    }
+    
+    function hideContextMenu() {
+      State.contextMenu = null;
+      render();
+    }
+    
+    function closeConfirm() {
+      State.confirmDialog = null;
+      render();
+    }
+    
+    function closeCurrentModal() {
+      if (State.modalStack.length > 0) {
+        const modal = State.modalStack.pop();
+        modal.remove();
+        calcExpression = '0';
+      }
+    }
+    
+    function closeModal(event) {
+      if (event.target.classList.contains('modal-overlay')) {
+        closeCurrentModal();
+      }
+    }
+    
+    function editSetting(key) {
+      const settings = Store.data.settings;
+      let value, label;
+      
+      if (key === 'monthlyBudget') {
+        value = settings.monthlyBudget;
+        label = '每月可支配金额';
+      } else if (key === 'fixedBudget') {
+        value = settings.fixedBudget;
+        label = '固定支出预算';
+      } else if (key === 'dailyBudget') {
+        value = settings.monthlyBudget - settings.fixedBudget;
+        label = '日常支出预算';
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">${label}</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <input type="number" class="input-field" id="setting-value" value="${value}" step="0.01">
+          </div>
+          
+          <button class="btn" onclick="saveSetting('${key}')">保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function saveSetting(key) {
+      const value = parseFloat(document.getElementById('setting-value').value) || 0;
+      
+      if (key === 'monthlyBudget') {
+        Store.data.settings.monthlyBudget = value;
+      } else if (key === 'fixedBudget') {
+        Store.data.settings.fixedBudget = value;
+      } else if (key === 'dailyBudget') {
+        Store.data.settings.fixedBudget = Store.data.settings.monthlyBudget - value;
+      }
+      
+      Store.save();
+      closeCurrentModal();
+      render();
+    }
+    
+    function editMonthBudget(year, month) {
+      const budget = Store.getMonthBudget(year, month);
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">${year}年${month}月预算</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">可支配金额</div>
+            <input type="number" class="input-field" id="month-total" value="${budget.total}" step="0.01">
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">固定支出预算</div>
+            <input type="number" class="input-field" id="month-fixed" value="${budget.fixed}" step="0.01">
+          </div>
+          
+          <button class="btn" onclick="saveMonthBudget(${year}, ${month})">保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function saveMonthBudget(year, month) {
+      const total = parseFloat(document.getElementById('month-total').value) || 0;
+      const fixed = parseFloat(document.getElementById('month-fixed').value) || 0;
+      
+      Store.setMonthBudget(year, month, { total, fixed });
+      closeCurrentModal();
+      render();
+    }
+    
+    function editCategory(categoryId) {
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">${category.name}</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="category-list">
+            ${category.items.map(item => `
+              <div class="category-item">
+                <div>
+                  <div class="category-name">${item.name}</div>
+                  ${item.subs && item.subs.length > 0 ? `<div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">${item.subs.join(', ')}</div>` : ''}
+                </div>
+                <div class="category-actions">
+                  <div class="category-btn" onclick="editCategoryItem('${categoryId}', '${item.id}')">✎</div>
+                  <div class="category-btn" onclick="deleteCategoryItem('${categoryId}', '${item.id}')">✕</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="add-category-btn" onclick="addCategoryItem('${categoryId}')">+ 添加事项</div>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function addCategoryItem(categoryId) {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">添加事项</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">事项名称</div>
+            <input type="text" class="input-field" id="item-name" placeholder="例如：吃早饭">
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">细分选项（用逗号分隔，可选）</div>
+            <input type="text" class="input-field" id="item-subs" placeholder="例如：吃饱就停, 不吃宵夜">
+          </div>
+          
+          <button class="btn" onclick="saveCategoryItem('${categoryId}', '')">保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function editCategoryItem(categoryId, itemId) {
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      const item = category.items.find(i => i.id === itemId);
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">编辑事项</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">事项名称</div>
+            <input type="text" class="input-field" id="item-name" value="${item.name}">
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">细分选项（用逗号分隔，可选）</div>
+            <input type="text" class="input-field" id="item-subs" value="${item.subs ? item.subs.join(', ') : ''}">
+          </div>
+          
+          <button class="btn" onclick="saveCategoryItem('${categoryId}', '${itemId}')">保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function saveCategoryItem(categoryId, itemId) {
+      const name = document.getElementById('item-name').value.trim();
+      const subsStr = document.getElementById('item-subs').value.trim();
+      const subs = subsStr ? subsStr.split(',').map(s => s.trim()).filter(s => s) : [];
+      
+      if (!name) {
+        alert('请输入事项名称');
+        return;
+      }
+      
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      
+      if (itemId) {
+        const item = category.items.find(i => i.id === itemId);
+        item.name = name;
+        item.subs = subs;
+      } else {
+        category.items.push({
+          id: Date.now().toString(),
+          name,
+          subs
+        });
+      }
+      
+      Store.save();
+      closeCurrentModal();
+      closeCurrentModal();
+      render();
+    }
+    
+    function deleteCategoryItem(categoryId, itemId) {
+      const category = Store.data.settings.categories.find(c => c.id === categoryId);
+      category.items = category.items.filter(i => i.id !== itemId);
+      Store.save();
+      closeCurrentModal();
+      editCategory(categoryId);
+    }
+    
+    function addCategory() {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay active';
+      modal.innerHTML = `
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <div class="modal-title">添加类别</div>
+            <div class="modal-close" onclick="closeCurrentModal()">✕</div>
+          </div>
+          
+          <div class="input-group">
+            <div class="input-label">类别名称</div>
+            <input type="text" class="input-field" id="category-name" placeholder="例如：运动">
+          </div>
+          
+          <button class="btn" onclick="saveNewCategory()">保存</button>
+        </div>
+      `;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeCurrentModal();
+      };
+      document.body.appendChild(modal);
+      State.modalStack.push(modal);
+    }
+    
+    function saveNewCategory() {
+      const name = document.getElementById('category-name').value.trim();
+      
+      if (!name) {
+        alert('请输入类别名称');
+        return;
+      }
+      
+      Store.data.settings.categories.push({
+        id: Date.now().toString(),
+        name,
+        items: []
+      });
+      
+      Store.save();
+      closeCurrentModal();
+      render();
+    }
+    
+    function attachEventListeners() {
+      // Long press for context menu
+      let pressTimer;
+      
+      // Achievement items
+      document.querySelectorAll('[data-achievement-id]').forEach(el => {
+        el.addEventListener('touchstart', (e) => {
+          pressTimer = setTimeout(() => {
+            const id = el.dataset.achievementId;
+            showAchievementMenu(e, id);
+          }, 500);
+        });
+        el.addEventListener('touchend', () => clearTimeout(pressTimer));
+        el.addEventListener('touchmove', () => clearTimeout(pressTimer));
+      });
+      
+      // Expense day items
+      document.querySelectorAll('[data-expense-day]').forEach(el => {
+        el.addEventListener('touchstart', (e) => {
+          pressTimer = setTimeout(() => {
+            const [year, month, day] = el.dataset.expenseDay.split('-').map(Number);
+            showExpenseMenu(e, year, month, day);
+          }, 500);
+        });
+        el.addEventListener('touchend', () => clearTimeout(pressTimer));
+        el.addEventListener('touchmove', () => clearTimeout(pressTimer));
+      });
+      
+      // Click outside to hide context menu
+      document.addEventListener('click', () => {
+        if (State.contextMenu) {
+          hideContextMenu();
+        }
+      });
+    }
+    
+    // Initial render
+    render();
+    
+    // Scroll to latest record on expenses page
+    setTimeout(() => {
+      const expensesPage = document.getElementById('page-expenses');
+      if (expensesPage) {
+        expensesPage.scrollTop = expensesPage.scrollHeight;
+      }
+    }, 100);
+  </script>
+</body>
+</html>
