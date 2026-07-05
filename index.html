@@ -1189,7 +1189,7 @@
               <span class="section-arrow">›</span>
             </div>
             <div class="section-content">
-              <div class="month-summary" onclick="editMonthBudget(${year}, ${month})" style="cursor: pointer;">
+              <div class="month-summary" onclick="event.stopPropagation(); editMonthBudget(${year}, ${month})" style="cursor: pointer;">
                 <div class="summary-row">
                   <span class="summary-label">预算</span>
                   <span class="summary-value">
