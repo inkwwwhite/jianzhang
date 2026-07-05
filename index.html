@@ -271,7 +271,7 @@
     .summary-col {
       display: flex;
       align-items: center;
-      margin-left: 20px;
+      margin-left: 12px;
     }
     
     .summary-col:first-child {
@@ -279,11 +279,11 @@
     }
     
     .summary-col-label {
-      margin-right: 6px;
+      margin-right: 4px;
     }
     
     .summary-col-num {
-      min-width: 65px;
+      min-width: 60px;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
@@ -985,11 +985,11 @@
     
     function renderPages() {
       return `
-        <div class="page ${State.currentTab === 0 ? 'active' : ''}" id="page-achievements">
-          ${renderAchievementsPage()}
-        </div>
-        <div class="page ${State.currentTab === 1 ? 'active' : ''}" id="page-expenses">
+        <div class="page ${State.currentTab === 0 ? 'active' : ''}" id="page-expenses">
           ${renderExpensesPage()}
+        </div>
+        <div class="page ${State.currentTab === 1 ? 'active' : ''}" id="page-achievements">
+          ${renderAchievementsPage()}
         </div>
         <div class="page ${State.currentTab === 2 ? 'active' : ''}" id="page-calendar">
           ${renderCalendarPage()}
@@ -1405,7 +1405,7 @@
     }
     
     function renderTabBar() {
-      const tabs = ['成就', '记账', '日历', '管理'];
+      const tabs = ['记账', '成就', '日历', '管理'];
       
       return `
         <div class="tab-bar">
@@ -1488,9 +1488,9 @@
     
     function openAddModal() {
       if (State.currentTab === 0) {
-        showAchievementModal();
-      } else {
         showExpenseModal();
+      } else {
+        showAchievementModal();
       }
     }
     
